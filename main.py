@@ -14,10 +14,30 @@ def get_kun_uz():
     try:
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text, 'html.parser')
-        links = soup.find_all('a', class_='news-l-item__title')
-        res = [link.get_text(strip=True) for link in links[:10]]
-        return res
-    except: return ["⚠️ Kun.uz dan ma'lumot olib bo'lmadi"]
+        
+        # Kun.uz-ning yangiliklar bloklarini qidiramiz
+        links = soup.find_all('a', class_='daily-block l-item')
+        
+        res = []
+        for link in links[:5]: # Eng oxirgi 5 ta yangilik
+            title = link.find('span', class_='news-title')
+            if title:
+                text = title.get_text(strip=True)
+                href = "https://kun.uz" + link.get('href')
+                res.append(f"🔵 {text}\n🔗 {href}")
+        
+        # Agar yangilik topilmasa, eski klassni tekshirib ko'ramiz
+        if not res:
+            links = soup.find_all('a', class_='news__title')
+            for link in links[:5]:
+                text = link.get_text(strip=True)
+                href = "https://kun.uz" + link.get('href')
+                res.append(f"🔵 {text}\n🔗 {href}")
+
+        return res if res else ["⚠️ Hozircha yangilik topilmadi"]
+    except Exception as e:
+        return [f"⚠️ Xato yuz berdi: {e}"]
+
 
 # 2. Daryo.uz funksiyasi
 def get_daryo_uz():
