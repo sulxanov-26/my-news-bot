@@ -4,7 +4,7 @@ import telebot
 from telebot import types
 
 # Sizning Telegram tokeningiz joylangan holatda
-TOKEN = "8468486478:AAEQk0pA71RMmbd0RMCUviFWSsaf5vJOh9k"
+TOKEN = os.getenv("8468486478:AAG0Osm3E8H-RGhEgAyhHIC4AKJISNahXjY")
 bot = telebot.TeleBot(TOKEN)
 
 # 1. Kun.uz funksiyasi
