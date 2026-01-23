@@ -55,28 +55,34 @@ def get_kun_uz():
 
 # 2. Daryo.uz funksiyasi
 def get_daryo_uz():
-    # Bir nechta manzilni tekshirish uchun ro'yxat
-    urls = ["https://daryo.uz/feed/", "https://daryo.uz/uz/feed/"]
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-    
-    import re
-    for url in urls:
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            titles = re.findall(r'<title>(.*?)</title>', r.text)
-            links = re.findall(r'<link>(.*?)</link>', r.text)
-            
-            if len(titles) > 1:
-                res = []
-                for i in range(1, min(6, len(titles))):
-                    t = titles[i].replace('<![CDATA[', '').replace(']]>', '')
-                    l = links[i]
-                    res.append(f"🔴 {t}\n🔗 {l}")
-                return res
-        except:
-            continue
-            
-    return ["⚠️ Daryo.uz serveri hozir band yoki yangilik joylanmagan."]
+    # Eng barqaror manzil - bu asosiy feed
+    url = "https://daryo.uz/feed/"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    try:
+        r = requests.get(url, headers=headers, timeout=15)
+        import re
+        # Sarlavhalar va linklarni qidirish (Regex - eng chidamlisi)
+        titles = re.findall(r'<title>(.*?)</title>', r.text)
+        links = re.findall(r'<link>(.*?)</link>', r.text)
+
+        # Agar manba rostdan ham bo'sh bo'lsa (faqat sayt nomi bo'lsa)
+        if len(titles) <= 1:
+            return ["⚠️ Daryo.uz serveri hozir yangilik bermayapti. Birozdan so'ng urinib ko'ring."]
+
+        res = []
+        # Kun.uz kabi 5 ta yangilikni tayyorlash
+        for i in range(1, min(6, len(titles))):
+            t = titles[i].replace('<![CDATA[', '').replace(']]>', '').strip()
+            l = links[i].strip() if i < len(links) else ""
+            if t: # Bo'sh bo'lmagan sarlavhalarni qo'shish
+                res.append(f"🔴 {t}\n🔗 {l}")
+        
+        return res
+    except Exception as e:
+        return [f"⚠️ Daryo RSS xatosi: {e}"]
+
 
 
 
