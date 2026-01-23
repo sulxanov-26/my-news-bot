@@ -52,20 +52,20 @@ def get_kun_uz():
 
 # 2. Daryo.uz funksiyasi
 def get_daryo_uz():
-    url = "https://daryo.uz/feed/"
+    url = "https://daryo.uz/uz/feed/"
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        # XML-dagi xatolarni chetlab o'tish uchun lxml yoki content o'rniga
-        # sarlavhalarni qo'lda (manual) qidiramiz, shunda hech qachon 'invalid token' chiqmaydi
         import re
+        # Sarlavha va linklarni matn ko'rinishida qidiramiz
         titles = re.findall(r'<title>(.*?)</title>', r.text)
         links = re.findall(r'<link>(.*?)</link>', r.text)
         
         res = []
-        # Birinchi title odatda saytning nomi bo'ladi, shuning uchun 1-dan boshlaymiz
+        # Birinchi sarlavha odatda sayt nomi bo'ladi, shuning uchun 1-dan boshlaymiz
         for i in range(1, 6):
             if i < len(titles) and i < len(links):
+                # CDATA kabi ortiqcha belgilarni tozalaymiz
                 t = titles[i].replace('<![CDATA[', '').replace(']]>', '')
                 l = links[i]
                 res.append(f"🔴 {t}\n🔗 {l}")
@@ -73,6 +73,7 @@ def get_daryo_uz():
         return res if res else ["⚠️ Daryo.uz dan yangilik topilmadi."]
     except Exception as e:
         return [f"⚠️ Daryo xatosi: {e}"]
+
 
 
 
