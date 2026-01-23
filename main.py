@@ -14,7 +14,7 @@ def run():
     app.run(host='0.0.0.0', port=port)
 
 # DIQQAT: TOKENNI BOTFATHERDAN YANGILAB QO'YING!
-TOKEN = "8468486478:AAEQOVdLYDAf42lthIgBibw1Whz-YiR8XYc"
+TOKEN = "8468486478:AAGKuA5lJ-VFXOKld5KKNoz4bRFmjeueYOM"
 bot = telebot.TeleBot(TOKEN)
 
 # 2. KESH TIZIMI (API bosimini kamaytirish va tezlik uchun)
