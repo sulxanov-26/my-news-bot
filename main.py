@@ -4,7 +4,7 @@ from flask import Flask
 from threading import Thread
 from bs4 import BeautifulSoup
 
-# 1. RENDER SERVERI (24/7 ISHLASH UCHUN)
+# 1. SERVER SOZLAMASI
 app = Flask('')
 @app.route('/')
 def home(): return "Bot Live! ✅"
@@ -13,84 +13,75 @@ def run():
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
 
-# DIQQAT: TOKENNI BOTFATHERDAN YANGILAB QO'YING!
+# TOKEN VA ADMIN ID (Eslatma uchun)
 TOKEN = "8468486478:AAGKuA5lJ-VFXOKld5KKNoz4bRFmjeueYOM"
+ADMIN_ID = "6102146115" # O'zingizning ID raqamingizni yozing
 bot = telebot.TeleBot(TOKEN)
 
-# 2. KESH TIZIMI (API bosimini kamaytirish va tezlik uchun)
+# 2. KESH VA ESLATMA UCHUN O'ZGARUVCHILAR
 weather_cache = {}
-currency_cache = {"data": None, "time": 0}
+currency_state = {"last_rate": None}
 
-# OB-HAVO FUNKSIYASI (KESH BILAN)
+# OB-HAVO FUNKSIYASI (ANIQ GRADUSDA)
 def get_weather(city_en):
-    now = time.time()
-    # Agar keshda bo'lsa va 15 daqiqa o'tmagan bo'lsa keshdan oladi
-    if city_en in weather_cache and (now - weather_cache[city_en]['time']) < 900:
-        return weather_cache[city_en]['text']
-    
     try:
-        url = f"https://wttr.in/{city_en}?format=%c+%t"
+        url = f"https://wttr.in/{city_en}?format=%c+%t&m"
         r = requests.get(url, timeout=10)
-        if r.status_code == 200:
-            uz_names = {
-                "Tashkent":"Toshkent", "Samarkand":"Samarqand", "Andijan":"Andijon",
-                "Fergana":"Farg'ona", "Namangan":"Namangan", "Bukhara":"Buxoro",
-                "Navoi":"Navoiy", "Karshi":"Qarshi", "Termez":"Termiz",
-                "Nukus":"Nukus", "Guliston":"Guliston", "Jizzakh":"Jizzax", "Urgench":"Urganch"
-            }
-            res_text = f"🌤 {uz_names.get(city_en, city_en)}: {r.text.strip()}"
-            weather_cache[city_en] = {'text': res_text, 'time': now}
-            return res_text
-        return "⚠️ Ma'lumot topilmadi."
-    except:
-        return "⚠️ Ob-havo xizmati band."
+        uz_names = {"Tashkent":"Toshkent", "Samarkand":"Samarqand", "Andijan":"Andijon", "Fergana":"Farg'ona", "Namangan":"Namangan", "Bukhara":"Buxoro", "Navoi":"Navoiy", "Karshi":"Qarshi", "Termez":"Termiz", "Nukus":"Nukus", "Guliston":"Guliston", "Jizzakh":"Jizzax", "Urgench":"Urganch"}
+        temp = r.text.strip().replace('+', '')
+        return f"🌤 {uz_names.get(city_en, city_en)}: {temp}"
+    except: return "⚠️ Ob-havo ma'lumotida xato."
 
-# 3. KINOLAR BAZASI (60 TA FILM)
-movies_data = {
-    "k_1": [("Jon Uik 4", "https://uzmovi.com/filmlar/john-wick-4"), ("Forsaj 10", "https://uzmovi.com/filmlar/fast-x"), ("Dedpul", "https://uzmovi.com/filmlar/deadpool"), ("Gladiator", "https://uzmovi.com/filmlar/gladiator"), ("Top Gan", "https://uzmovi.com/filmlar/top-gun"), ("Betmen", "https://uzmovi.com/filmlar/the-batman"), ("Spiderman", "https://uzmovi.com/filmlar/spider-man"), ("Kingsman", "https://uzmovi.com/filmlar/kingsman"), ("Reaktiv", "https://uzmovi.com/filmlar/extraction"), ("Transfomer", "https://uzmovi.com/filmlar/transformers")],
-    "k_2": [("1+1", "https://uzmovi.com/filmlar/the-intouchables"), ("Maska", "https://uzmovi.com/filmlar/the-mask"), ("Uyda yolg'iz", "https://uzmovi.com/filmlar/home-alone"), ("Janob Bin", "https://uzmovi.com/filmlar/mr-bean"), ("Diktator", "https://uzmovi.com/filmlar/the-dictator"), ("Ted", "https://uzmovi.com/filmlar/ted"), ("Oshpaz", "https://uzmovi.com/filmlar/chef"), ("Free Guy", "https://uzmovi.com/filmlar/free-guy"), ("Katta yigit", "https://uzmovi.com/filmlar/big"), ("Oshpaz-2", "https://uzmovi.com/filmlar/chef-2")],
-    "k_3": [("Astral", "https://uzmovi.com/filmlar/insidious"), ("Anabell", "https://uzmovi.com/filmlar/annabelle"), ("Chaqiriq", "https://uzmovi.com/filmlar/the-conjuring"), ("Nunn", "https://uzmovi.com/filmlar/the-nun"), ("Arr", "https://uzmovi.com/filmlar/saw"), ("IT", "https://uzmovi.com/filmlar/it"), ("Zulmat", "https://uzmovi.com/filmlar/lights-out"), ("Tungi ov", "https://uzmovi.com/filmlar/night-hunt"), ("Qabriston", "https://uzmovi.com/filmlar/cemetery"), ("Vahima", "https://uzmovi.com/filmlar/panic")],
-    "k_4": [("Avatar", "https://uzmovi.com/filmlar/avatar"), ("Tor", "https://uzmovi.com/filmlar/thor"), ("Marslik", "https://uzmovi.com/filmlar/the-martian"), ("Interstellar", "https://uzmovi.com/filmlar/interstellar"), ("Tenet", "https://uzmovi.com/filmlar/tenet"), ("Duna", "https://uzmovi.com/filmlar/dune"), ("Inception", "https://uzmovi.com/filmlar/inception"), ("Matrix", "https://uzmovi.com/filmlar/the-matrix"), ("Prometey", "https://uzmovi.com/filmlar/prometheus"), ("Star Wars", "https://uzmovi.com/filmlar/star-wars")],
-    "k_5": [("Titanik", "https://uzmovi.com/filmlar/titanic"), ("Joker", "https://uzmovi.com/filmlar/joker"), ("Yashil mil", "https://uzmovi.com/filmlar/the-green-mile"), ("Sherlok", "https://uzmovi.com/filmlar/sherlock"), ("Otam", "https://uzmovi.com/filmlar/the-father"), ("Lala Land", "https://uzmovi.com/filmlar/la-la-land"), ("Parazit", "https://uzmovi.com/filmlar/parasite"), ("Leon", "https://uzmovi.com/filmlar/leon"), ("Skarfeys", "https://uzmovi.com/filmlar/scarface"), ("Yetti", "https://uzmovi.com/filmlar/seven")],
-    "k_6": [("Shrek", "https://uzmovi.com/filmlar/shrek"), ("Moana", "https://uzmovi.com/filmlar/moana"), ("Kung-fu Panda", "https://uzmovi.com/filmlar/kung-fu-panda"), ("Rio", "https://uzmovi.com/filmlar/rio"), ("Muzlik davri", "https://uzmovi.com/filmlar/ice-age"), ("Madagaskar", "https://uzmovi.com/filmlar/madagascar"), ("Koko", "https://uzmovi.com/filmlar/coco"), ("Luka", "https://uzmovi.com/filmlar/luca"), ("Raya", "https://uzmovi.com/filmlar/raya"), ("Zootopiya", "https://uzmovi.com/filmlar/zootopia")]
-}
+# VALYUTA O'ZGARISHINI TEKSHIRISH (ESLATMA)
+def check_currency_update():
+    while True:
+        try:
+            r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
+            current_usd = r[0]['Rate']
+            if currency_state["last_rate"] and currency_state["last_rate"] != current_usd:
+                msg = f"🔔 **DIQQAT! Valyuta kursi o'zgardi!**\n\n💵 1 USD = {current_usd} so'm"
+                bot.send_message(ADMIN_ID, msg, parse_mode="Markdown")
+            currency_state["last_rate"] = current_usd
+        except: pass
+        time.sleep(3600) # Har 1 soatda tekshiradi
+
+# 3. KINOLAR BAZASI (120 TA FILM)
+def get_movies(genre_key):
+    movies = {
+        "k_1": [("Jon Uik 1", "https://t.me/c/123/1"), ("Jon Uik 2", "https://t.me/c/123/2"), ("Jon Uik 3", "https://t.me/c/123/3"), ("Jon Uik 4", "https://t.me/c/123/4"), ("Forsaj 1", "https://t.me/c/123/5"), ("Forsaj 9", "https://t.me/c/123/6"), ("Forsaj 10", "https://t.me/c/123/7"), ("Dedpul", "https://t.me/c/123/8"), ("Gladiator", "https://t.me/c/123/9"), ("Top Gan", "https://t.me/c/123/10"), ("Betmen", "https://t.me/c/123/11"), ("Spiderman", "https://t.me/c/123/12"), ("Kingsman", "https://t.me/c/123/13"), ("Reaktiv", "https://t.me/c/123/14"), ("Transfomer", "https://t.me/c/123/15"), ("Rambo", "https://t.me/c/123/16"), ("Terminator", "https://t.me/c/123/17"), ("Ip Man", "https://t.me/c/123/18"), ("Mortal Kombat", "https://t.me/c/123/19"), ("Toshqin", "https://t.me/c/123/20")],
+        "k_2": [("1+1", "link"), ("Maska", "link"), ("Uyda yolg'iz 1", "link"), ("Uyda yolg'iz 2", "link"), ("Janob Bin", "link"), ("Diktator", "link"), ("Ted", "link"), ("Oshpaz", "link"), ("Free Guy", "link"), ("Katta yigit", "link"), ("Oshpaz 2", "link"), ("Zoolander", "link"), ("Hangover", "link"), ("Bad Boys", "link"), ("Rush Hour", "link"), ("Minionlar", "link"), ("Shrek", "link"), ("Kung Fu Panda", "link"), ("Madagaskar", "link"), ("Muzlik davri", "link")],
+        "k_3": [("Astral 1", "link"), ("Astral 2", "link"), ("Anabell", "link"), ("Chaqiriq", "link"), ("Nunn", "link"), ("Arr", "link"), ("IT", "link"), ("Vahima", "link"), ("Qabriston", "link"), ("Zulmat", "link"), ("Eksorsist", "link"), ("Saw X", "link"), ("Scream", "link"), ("Halloween", "link"), ("Sinister", "link"), ("Mama", "link"), ("Omen", "link"), ("The Ring", "link"), ("The Grudge", "link"), ("Us", "link")],
+        "k_4": [("Avatar 1", "link"), ("Avatar 2", "link"), ("Interstellar", "link"), ("Tenet", "link"), ("Duna 1", "link"), ("Duna 2", "link"), ("Inception", "link"), ("Matrix", "link"), ("Marslik", "link"), ("Tor", "link"), ("Loki", "link"), ("Star Wars", "link"), ("Prometey", "link"), ("Aliens", "link"), ("Predator", "link"), ("Avengers", "link"), ("Iron Man", "link"), ("Black Panther", "link"), ("Doctor Strange", "link"), ("Guardians", "link")],
+        "k_5": [("Titanik", "link"), ("Joker", "link"), ("Yashil mil", "link"), ("Sherlok", "link"), ("Otam", "link"), ("Parazit", "link"), ("Leon", "link"), ("Seven", "link"), ("Skarfeys", "link"), ("Lala Land", "link"), ("Hachiko", "link"), ("Pianist", "link"), ("The Whale", "link"), ("Braveheart", "link"), ("Troy", "link"), ("Elvis", "link"), ("Oppenheimer", "link"), ("Napoleon", "link"), ("Barbi", "link"), ("Gran Turismo", "link")],
+        "k_6": [("Moana", "link"), ("Rio", "link"), ("Koko", "link"), ("Luka", "link"), ("Raya", "link"), ("Zootopiya", "link"), ("Up", "link"), ("Wall-E", "link"), ("Ratatuy", "link"), ("Cars 1", "link"), ("Cars 2", "link"), ("Cars 3", "link"), ("Toy Story", "link"), ("Soul", "link"), ("Encanto", "link"), ("Bambi", "link"), ("Lion King", "link"), ("Aladdin", "link"), ("Frozen", "link"), ("Tangled", "link")]
+    }
+    return movies.get(genre_key, [])
 
 @bot.message_handler(commands=['start'])
 def start(m):
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    # TUGMALAR NOMINI YANGILADIK (KATTA HARFLARDA)
     kb.add("📰 KUN.UZ YANGILIKLAR", "💰 VALYUTA", "🌤 OB-HAVO", "🎬 KINOLAR")
     bot.send_message(m.chat.id, f"Assalomu Alaykum! Bo'limni tanlang:", reply_markup=kb)
 
 @bot.message_handler(func=lambda m: True)
 def main_menu(m):
     txt = m.text.upper()
-    
     if "KUN.UZ" in txt:
         try:
             r = requests.get("https://kun.uz/news/rss")
             soup = BeautifulSoup(r.content, 'xml')
             res = "".join([f"🔴 {i.title.text}\n🔗 [Ochish]({i.link.text})\n\n" for i in soup.find_all('item')[:10]])
             bot.send_message(m.chat.id, res, parse_mode="Markdown", disable_web_page_preview=True)
-        except: bot.send_message(m.chat.id, "⚠️ Yangiliklar yuklanmadi.")
+        except: bot.send_message(m.chat.id, "⚠️ Xato yuz berdi.")
 
     elif "VALYUTA" in txt:
-        now = time.time()
-        # Valyuta keshini tekshirish (1 soatda bir yangilanadi)
-        if not currency_cache["data"] or (now - currency_cache["time"]) > 3600:
-            try:
-                r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
-                currency_cache["data"] = r[:10]
-                currency_cache["time"] = now
-            except: pass
-        
-        if currency_cache["data"]:
-            res = "💰 **VALYUTA KURSLARI (MB):**\n\n"
-            for i in currency_cache["data"]:
+        try:
+            r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
+            res = "💰 **VALYUTA KURSLARI (10 TA):**\n\n"
+            for i in r[:10]:
                 res += f"🔹 1 {i['Ccy']} = {i['Rate']} so'm\n"
             bot.send_message(m.chat.id, res)
-        else:
-            bot.send_message(m.chat.id, "⚠️ Ma'lumotni olib bo'lmadi.")
+        except: bot.send_message(m.chat.id, "⚠️ Ma'lumot yo'q.")
 
     elif "OB-HAVO" in txt:
         kb = types.InlineKeyboardMarkup(row_width=3)
@@ -100,20 +91,21 @@ def main_menu(m):
 
     elif "KINOLAR" in txt:
         kb = types.InlineKeyboardMarkup(row_width=2)
-        j = [("🔥 Jangovar", "k_1"), ("😂 Komediya", "k_2"), ("😱 Qo'rqinchli", "k_3"), ("🚀 Fantastika", "k_4"), ("🎭 Drama", "k_5"), ("👶 Multfilm", "k_6")]
+        j = [("🔥 Action", "k_1"), ("😂 Komediya", "k_2"), ("😱 Horror", "k_3"), ("🚀 Sci-Fi", "k_4"), ("🎭 Drama", "k_5"), ("👶 Multfilm", "k_6")]
         kb.add(*[types.InlineKeyboardButton(t, callback_data=d) for t, d in j])
-        bot.send_message(m.chat.id, "🎥 Janrni tanlang:", reply_markup=kb)
+        bot.send_message(m.chat.id, "🎥 Janrni tanlang (Har birida 20 ta kino):", reply_markup=kb)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     if call.data.startswith("w_"):
         bot.send_message(call.message.chat.id, get_weather(call.data[2:]))
     elif call.data.startswith("k_"):
-        res = "🎬 **Kinolar:**\n\n" + "\n".join([f"🔹 [{n}]({l})" for n, l in movies_data[call.data]])
+        m_list = get_movies(call.data)
+        res = "🎬 **Kinolar Ro'yxati:**\n\n" + "\n".join([f"🔹 [{n}]({l})" for n, l in m_list])
         bot.send_message(call.message.chat.id, res, parse_mode="Markdown", disable_web_page_preview=True)
     bot.answer_callback_query(call.id)
 
 if __name__ == "__main__":
     Thread(target=run).start()
+    Thread(target=check_currency_update).start() # Eslatmani ishga tushirish
     bot.infinity_polling()
-
