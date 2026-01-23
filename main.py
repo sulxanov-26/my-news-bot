@@ -13,7 +13,7 @@ def run():
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
 
-TOKEN = "8468486478:AAEQOVdLYDAf42lthIgBibw1Whz-YiR8XYc"
+TOKEN = "8468486478:AAEpNjWEFzVr6cuwrhNaDMIfHRi1rS7Jn6Y"
 bot = telebot.TeleBot(TOKEN)
 
 # 2. OB-HAVO (API orqali)
