@@ -55,25 +55,29 @@ def get_kun_uz():
 
 # 2. Daryo.uz funksiyasi
 def get_daryo_uz():
-    url = "https://daryo.uz/uz/feed/"
+    url = "https://daryo.uz/feed/" # Avval shu manzilni sinang
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         r = requests.get(url, headers=headers, timeout=15)
         import re
+        # Sarlavhalarni har xil variantda qidirib ko'ramiz
         titles = re.findall(r'<title>(.*?)</title>', r.text)
         links = re.findall(r'<link>(.*?)</link>', r.text)
         
         res = []
-        for i in range(1, 6):
-            if i < len(titles) and i < len(links):
+        # Agar titles topilgan bo'lsa, 1-dan boshlab (sayt nomidan keyin) olamiz
+        if len(titles) > 1:
+            for i in range(1, min(6, len(titles))):
                 t = titles[i].replace('<![CDATA[', '').replace(']]>', '')
-                l = links[i]
+                l = links[i] if i < len(links) else ""
                 res.append(f"🔴 {t}\n🔗 {l}")
-        
-        return res if res else ["⚠️ Daryo RSS manbasi bo'sh."]
+            return res
+        else:
+            return ["⚠️ Daryo.uz hozirda yangilik yubormayapti (Manba bo'sh)."]
+            
     except Exception as e:
-        # Kun.uz bilan bir xil uslubdagi xato xabari
         return [f"⚠️ Daryo RSS xatosi: {e}"]
+
 
 
 
