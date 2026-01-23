@@ -22,38 +22,40 @@ def keep_alive():
 keep_alive()
 
 # Sizning Telegram tokeningiz joylangan holatda
-TOKEN "8468486478:AAGKfunYf-7R6P5HMuHC3uWIGErEDxvRw3M"
+TOKEN "8468486478:AAHDZ6vpmosX7t7VzlzqmRsO20FveKh5hHI"
 bot = telebot.TeleBot(TOKEN)
 
 # 1. Kun.uz funksiyasi
 def get_kun_uz():
     url = "https://kun.uz/news/list"
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     try:
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text, 'html.parser')
-        # Klass nomini barqarorrog'iga almashtiramiz
+        
+        # Kun.uz yangilangan klasslari
+        res = []
+        # 1-variant: Eng ko'p ishlatiladigan klass
         links = soup.find_all('a', class_='news-l-item')
         
-        res = []
+        if not links:
+            # 2-variant: Muqobil klass
+            links = soup.find_all('a', class_='daily-block')
+
         for link in links[:5]:
-            title_tag = link.find('span', class_='news-title')
+            # Sarlavhani topishning bir necha usuli
+            title_tag = link.find('span', class_='news-title') or link.find('p')
             if title_tag:
                 text = title_tag.get_text(strip=True)
-                href = "https://kun.uz" + link.get('href')
+                href = link.get('href')
+                if not href.startswith('http'):
+                    href = "https://kun.uz" + href
                 res.append(f"🔵 {text}\n🔗 {href}")
         
-        if not res:
-            # Agar yuqoridagi klass topilmasa, muqobil klassni tekshiramiz
-            links = soup.find_all('a', class_='daily-block')
-            for link in links[:5]:
-                text = link.get_text(strip=True)
-                href = "https://kun.uz" + link.get('href')
-                res.append(f"🔵 {text}\n🔗 {href}")
-
-        return res if res else ["⚠️ Yangilik topilmadi"]
+        return res if res else ["⚠️ Kun.uz dan hozircha yangilik olib bo'lmadi. Sayt strukturasi o'zgargan bo'lishi mumkin."]
     except Exception as e:
-        return [f"⚠️ Xato yuz berdi: {e}"]
+        return [f"⚠️ Xato: {e}"]
+
 
 
 
