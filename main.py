@@ -65,7 +65,7 @@ def get_kun_uz():
 
         return res if res else ["⚠️ Kun.uz dan hozircha yangilik olib bo'lmadi. Sayt strukturasi o'zgargan bo'lishi mumkin."]
     except Exception as e:
-        return [f"⚠️ Xato yuz berdi: {e}"
+        return [f"⚠️ Xato yuz berdi: {e}"]
 # 2. Daryo.uz funksiyasi
 def get_daryo_uz():
     headers = {'User-Agent': 'Mozilla/5.0'}
