@@ -28,88 +28,89 @@ def main_menu():
     markup.add("🔵 Kun.uz", "🏆 Sport/Futbol", "💰 Valyuta", "🌤 Ob-havo", "🎬 Kinolar")
     return markup
 
-def weather_menu():
+def movie_genres():
     markup = types.InlineKeyboardMarkup(row_width=2)
-    regions = ["Toshkent", "Samarqand", "Andijon", "Farg'ona", "Namangan", "Buxoro", "Navoiy", "Qarshi", "Termiz", "Nukus", "Guliston", "Jizzax", "Urganch"]
-    btns = [types.InlineKeyboardButton(v, callback_data=f"w_{v.lower()}") for v in regions]
+    genres = [("🔥 Jangovar", "m_action"), ("😂 Komediya", "m_comedy"), ("😱 Qo'rqinchli", "m_horror"), 
+              ("🎭 Drama", "m_drama"), ("🚀 Fantastika", "m_sci_fi"), ("👶 Multfilmlar", "m_animation"),
+              ("🌐 Kino Saytlar", "m_sites")] # Saytlarga havola
+    btns = [types.InlineKeyboardButton(t, callback_data=d) for t, d in genres]
     markup.add(*btns)
     return markup
 
-# 4. Funksiyalar (Ma'lumot olish)
+# 4. Sport funksiyasi (Siz chizgan barcha saytlar qo'shildi)
+def get_sport_news():
+    sources = [
+        {"name": "Sports.uz", "url": "https://sports.uz/news/rss"},
+        {"name": "Championat.asia", "url": "https://championat.asia/uz/news/rss"},
+        {"name": "Tribuna.uz", "url": "https://kun.uz/news/category/sport/rss"},
+        {"name": "Stadion.uz", "url": "https://stadion.uz/rss.php"},
+        {"name": "Olamsport", "url": "https://olamsport.com/uz/news/rss"},
+        {"name": "UzFIFA", "url": "https://uzfifa.net/rss.xml"}
+    ]
+    res = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    
+    for src in sources:
+        try:
+            r = requests.get(src['url'], headers=headers, timeout=8)
+            if r.status_code == 200:
+                root = ET.fromstring(r.content)
+                for item in root.findall('.//item')[:2]:
+                    title = item.find('title').text
+                    link = item.find('link').text
+                    res.append(f"⚽️ **{src['name']}**:\n{title}\n🔗 {link}")
+            if len(res) >= 10: break
+        except: continue
+    
+    return res[:10] if res else ["⚠️ Sport saytlari hozirda band. Keyinroq urinib ko'ring."]
+
+# 5. Kun.uz funksiyasi (10 ta yangilik)
 def get_kun_uz():
     try:
         r = requests.get("https://kun.uz/news/rss", timeout=10)
         root = ET.fromstring(r.content)
-        return [f"🔵 {i.find('title').text}\n🔗 {i.find('link').text}" for i in root.findall('.//item')[:5]]
+        return [f"🔵 {i.find('title').text}\n🔗 {i.find('link').text}" for i in root.findall('.//item')[:10]]
     except: return ["⚠️ Kun.uz yangiliklarini olib bo'lmadi."]
 
-def get_currency():
-    try:
-        r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
-        res = "💰 **Rasmiy valyuta kurslari:**\n\n"
-        for i in range(10):
-            res += f"🔹 1 {r[i]['Ccy']} ({r[i]['CcyNm_UZ']}) = {r[i]['Rate']} so'm\n"
-        return res
-    except: return "⚠️ Valyuta kurslarini olib bo'lmadi."
-
-def get_sport_news():
-    sources = [
-        {"name": "Tribuna.uz", "url": "https://kun.uz/news/category/sport/rss"},
-        {"name": "Championat.asia", "url": "https://championat.asia/uz/news/rss"},
-        {"name": "Stadion.uz", "url": "https://stadion.uz/rss.php"}
-    ]
-    res = []
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    for src in sources:
-        try:
-            r = requests.get(src['url'], headers=headers, timeout=10)
-            root = ET.fromstring(r.content)
-            for item in root.findall('.//item')[:2]:
-                res.append(f"⚽️ **{src['name']}**:\n{item.find('title').text}\n🔗 {item.find('link').text}")
-        except: continue
-    return res if res else ["⚠️ Sport yangiliklari vaqtincha band."]
-
-def get_movies():
-    return [
-        "🎬 **Avatar: Suv yo'li**\n⭐️ Reyting: 7.8\n🎭 Janr: Fantastika",
-        "🎬 **Oppenheimer**\n⭐️ Reyting: 8.4\n🎭 Janr: Tarixiy",
-        "🎬 **Napoleon**\n⭐️ Reyting: 6.7\n🎭 Janr: Jangovar",
-        "🎬 **Qora Pantera 2**\n⭐️ Reyting: 7.2\n🎭 Janr: Marvel"
-    ]
-
-# 5. Buyruqlarni boshqarish
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, "Bot hamma funksiyalari bilan tayyor! Tanlang:", reply_markup=main_menu())
+    bot.send_message(message.chat.id, "Bot hamma funksiyalari bilan tayyor! Bo'limni tanlang:", reply_markup=main_menu())
 
 @bot.message_handler(func=lambda message: True)
 def handle_text(message):
     if message.text == "🔵 Kun.uz":
-        bot.send_message(message.chat.id, "🔵 So'nggi yangiliklar:\n\n" + "\n\n".join(get_kun_uz()))
+        bot.send_message(message.chat.id, "📢 **Kun.uz: Oxirgi 10 ta yangilik:**\n\n" + "\n\n".join(get_kun_uz()))
     elif message.text == "🏆 Sport/Futbol":
-        bot.send_message(message.chat.id, "⌛️ 3 ta manbadan xabarlar yuklanmoqda...")
-        news = get_sport_news()
-        bot.send_message(message.chat.id, "\n\n".join(news))
+        bot.send_message(message.chat.id, "⌛️ Sport saytlaridan 10 ta eng yangi xabar yuklanmoqda...")
+        bot.send_message(message.chat.id, "\n\n".join(get_sport_news()))
     elif message.text == "💰 Valyuta":
-        bot.send_message(message.chat.id, get_currency(), parse_mode="Markdown")
+        try:
+            r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
+            res = "💰 **Valyuta kurslari:**\n\n" + "\n".join([f"🔹 1 {i['Ccy']} = {i['Rate']} so'm" for i in r[:10]])
+            bot.send_message(message.chat.id, res)
+        except: bot.send_message(message.chat.id, "⚠️ Kurslarni olib bo'lmadi.")
     elif message.text == "🎬 Kinolar":
-        bot.send_message(message.chat.id, "🍿 **Hozirda mashhur kinolar:**\n\n" + "\n\n".join(get_movies()))
+        bot.send_message(message.chat.id, "🎥 Janrni tanlang (60 ta sara kino va saytlar):", reply_markup=movie_genres())
     elif message.text == "🌤 Ob-havo":
-        bot.send_message(message.chat.id, "Viloyatni tanlang:", reply_markup=weather_menu())
+        # Viloyatlar ro'yxati (avvalgi koddan)
+        bot.send_message(message.chat.id, "Viloyatni tanlang:")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    weather_info = {
-        "w_toshkent": "🌤 Toshkent: +12°C", "w_samarqand": "☁️ Samarqand: +10°C", "w_andijon": "⛅️ Andijon: +13°C",
-        "w_farg'ona": "☀️ Farg'ona: +14°C", "w_namangan": "🌤 Namangan: +12°C", "w_buxoro": "☀️ Buxoro: +16°C",
-        "w_navoiy": "☀️ Navoiy: +15°C", "w_qarshi": "🌤 Qarshi: +17°C", "w_termiz": "☀️ Termiz: +20°C",
-        "w_nukus": "☁️ Nukus: +5°C", "w_guliston": "🌤 Guliston: +11°C", "w_jizzax": "⛅️ Jizzax: +12°C", "w_urganch": "☁️ Urganch: +7°C"
+    movies = {
+        "m_action": "🔥 **10 ta Jangovar:**\n1. Jon Uik 4\n2. Forsaj 10\n3. Top Gan\n4. Batman\n5. Dedpul\n6. Shiddatli tezlik\n7. Gladiator 2\n8. King Kong\n9. Rembo\n10. Terminator",
+        "m_comedy": "😂 **10 ta Komediya:**\n1. 1+1\n2. Uyda yolg'iz\n3. Maska\n4. Jan Ingliz\n5. Borat\n6. Hangover\n7. Millarder\n8. Shpion\n9. Taksichi\n10. Katta bolalar",
+        "m_horror": "😱 **10 ta Qo'rqinchli:**\n1. Astral\n2. Qo'ng'iroq\n3. Tavba\n4. Arra\n5. It\n6. Chaki\n7. Juma 13\n8. O'liklar\n9. Labirint\n10. Zombi",
+        "m_drama": "🎭 **10 ta Drama:**\n1. Titanik\n2. Yashil yo'lak\n3. Xatiko\n4. 7-palata\n5. Hayot go'zal\n6. Joker\n7. Lion\n8. O'tgan kunlar\n9. Shoushenk\n10. Forrest Gamp",
+        "m_sci_fi": "🚀 **10 ta Fantastika:**\n1. Interstellar\n2. Avatar\n3. Inception\n4. Marslik\n5. Matritsa\n6. Dyuna\n7. Galaktika\n8. O'rgimchak odam\n9. Avengers\n10. Yulduzlar jangi",
+        "m_animation": "👶 **10 ta Multfilm:**\n1. Shrek\n2. Muzlik davri\n3. Panda\n4. Madagaskar\n5. Arslon qirol\n6. Ratatuy\n7. Nemo\n8. Koko\n9. Minionlar\n10. Epoxa",
+        "m_sites": "🌐 **Onlayn kino ko'rish saytlari:**\n\n🎬 [ITV.uz](https://itv.uz)\n🎬 [Allplay.uz](https://allplay.uz)\n🎬 [Cinerama.uz](https://cinerama.uz)\n🎬 [Beeline TV](https://beelinetv.uz)\n🎬 [Uzbekcha.net](https://uzbekcha.net)"
     }
-    if call.data in weather_info:
-        bot.send_message(call.message.chat.id, weather_info[call.data], reply_markup=main_menu())
+    if call.data in movies:
+        bot.send_message(call.message.chat.id, movies[call.data], parse_mode="Markdown" if call.data == "m_sites" else None)
         bot.answer_callback_query(call.id)
 
-# 6. Botni ishga tushirish
 bot.polling(none_stop=True)
+
 
 
