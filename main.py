@@ -1,44 +1,56 @@
-import requests
-import telebot
+import requests, telebot, os
 from telebot import types
 from bs4 import BeautifulSoup
+from flask import Flask
+from threading import Thread
+
+# 1. RENDER UCHUN PORT MUAMMOSINI YECHISH (O'chirmang!)
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot ishlashda davom etmoqda..."
+
+def run_server():
+    # Render avtomatik beradigan PORTni ushlab oladi
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
 
 TOKEN = "8468486478:AAEQOVdLYDAf42lthIgBibw1Whz-YiR8XYc"
 bot = telebot.TeleBot(TOKEN)
 
-# 🌤 OB-HAVO (Bloklanmaydigan API usuli)
+# 2. OB-HAVO (Bloklanmaydigan va Gradusni ko'rsatadigan API)
 def get_weather(city):
     try:
-        # Bu API kaliti ochiq va bepul ishlaydi
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid=b713020054700d98192801e0e8e97495&units=metric&lang=uz"
-        data = requests.get(url, timeout=10).json()
-        temp = data['main']['temp']
-        desc = data['weather'][0]['description']
+        r = requests.get(url, timeout=10).json()
+        temp = r['main']['temp']
+        desc = r['weather'][0]['description']
         return f"📍 **{city.upper()}**\n\n🌡 Harorat: {temp}°C\n☁️ Holat: {desc.capitalize()}"
     except:
-        return "⚠️ Ob-havo ma'lumotini hozircha olib bo'lmadi."
+        return "⚠️ Ob-havo ma'lumotini yuklab bo'lmadi."
 
-# 🎬 KINOLAR BAZASI
-movies = {
-    "k_1": [("Jon Uik 4", "https://uzmovi.com/search?q=John+Wick"), ("Forsaj 10", "https://uzmovi.com/search?q=Fast"), ("Gladiator", "https://uzmovi.com/search?q=Gladiator"), ("Betmen", "https://uzmovi.com/search?q=Batman"), ("Top Gan", "https://uzmovi.com/search?q=Top+Gun"), ("T-34", "https://uzmovi.com/search?q=T-34"), ("Ekvalayzer", "https://uzmovi.com/search?q=Equalizer"), ("Kingsman", "https://uzmovi.com/search?q=Kingsman"), ("Missiya bajarilmas", "https://uzmovi.com/search?q=Mission"), ("Rembo", "https://uzmovi.com/search?q=Rambo")],
-    "k_2": [("1+1", "https://uzmovi.com/search?q=Intouchables"), ("Maska", "https://uzmovi.com/search?q=Mask"), ("Taksichi", "https://uzmovi.com/search?q=Taxi"), ("Uyda yolg'iz", "https://uzmovi.com/search?q=Home"), ("Katta bolalar", "https://uzmovi.com/search?q=Grown"), ("Diktator", "https://uzmovi.com/search?q=Dictator"), ("Jan Ingliz", "https://uzmovi.com/search?q=Johnny"), ("Yomon yigitlar", "https://uzmovi.com/search?q=Bad"), ("Sardorlar", "https://uzmovi.com/search?q=Captains"), ("Kruella", "https://uzmovi.com/search?q=Cruella")],
-    "k_3": [("Anabell", "https://uzmovi.com/search?q=Annabelle"), ("Astral", "https://uzmovi.com/search?q=Insidious"), ("O'liklar", "https://uzmovi.com/search?q=Dead"), ("Arvoh", "https://uzmovi.com/search?q=Ghost"), ("Nafas olma", "https://uzmovi.com/search?q=Breathe"), ("O'yin", "https://uzmovi.com/search?q=Game"), ("Tuzoq", "https://uzmovi.com/search?q=Trap"), ("Qichqiriq", "https://uzmovi.com/search?q=Scream"), ("Arra", "https://uzmovi.com/search?q=Saw"), ("Zulmat", "https://uzmovi.com/search?q=Dark")],
-    "k_4": [("Avatar", "https://uzmovi.com/search?q=Avatar"), ("O'rgimchak odam", "https://uzmovi.com/search?q=Spider"), ("Tor", "https://uzmovi.com/search?q=Thor"), ("Iron Man", "https://uzmovi.com/search?q=Iron"), ("Interstellar", "https://uzmovi.com/search?q=Interstellar"), ("Marslik", "https://uzmovi.com/search?q=Martian"), ("Duna", "https://uzmovi.com/search?q=Dune"), ("Yulduzlar jangi", "https://uzmovi.com/search?q=Wars"), ("Godzilla", "https://uzmovi.com/search?q=Godzilla"), ("Transformatorlar", "https://uzmovi.com/search?q=Transformers")],
-    "k_5": [("Yashil yo'lak", "https://uzmovi.com/search?q=Green"), ("Titanik", "https://uzmovi.com/search?q=Titanic"), ("Hachiko", "https://uzmovi.com/search?q=Hachiko"), ("Legend", "https://uzmovi.com/search?q=Legend"), ("Skarfeys", "https://uzmovi.com/search?q=Scarface"), ("Joker", "https://uzmovi.com/search?q=Joker"), ("Parazit", "https://uzmovi.com/search?q=Parasite"), ("Sherlok", "https://uzmovi.com/search?q=Sherlock"), ("Pianinochi", "https://uzmovi.com/search?q=Pianist"), ("Leon", "https://uzmovi.com/search?q=Leon")],
-    "k_6": [("Qirol Sher", "https://uzmovi.com/search?q=Lion"), ("Shrek", "https://uzmovi.com/search?q=Shrek"), ("Kung-fu Panda", "https://uzmovi.com/search?q=Panda"), ("Muzlik davri", "https://uzmovi.com/search?q=Ice"), ("Moana", "https://uzmovi.com/search?q=Moana"), ("Koko", "https://uzmovi.com/search?q=Coco"), ("Ratauy", "https://uzmovi.com/search?q=Ratatouille"), ("Luka", "https://uzmovi.com/search?q=Luca"), ("Minionlar", "https://uzmovi.com/search?q=Minions"), ("Madagaskar", "https://uzmovi.com/search?q=Madagascar")]
+# 3. KINOLAR BAZASI (Nomlar va Linklar bilan)
+movies_data = {
+    "k_1": [("Jon Uik 4", "https://uzmovi.com/search?q=John+Wick"), ("Forsaj 10", "https://uzmovi.com/search?q=Fast")],
+    "k_2": [("1+1", "https://uzmovi.com/search?q=Intouchables"), ("Maska", "https://uzmovi.com/search?q=Mask")],
+    "k_3": [("Astral", "https://uzmovi.com/search?q=Insidious"), ("Anabell", "https://uzmovi.com/search?q=Annabelle")],
+    "k_4": [("Avatar", "https://uzmovi.com/search?q=Avatar"), ("O'rgimchak odam", "https://uzmovi.com/search?q=Spider")],
+    "k_5": [("Titanik", "https://uzmovi.com/search?q=Titanic"), ("Joker", "https://uzmovi.com/search?q=Joker")],
+    "k_6": [("Shrek", "https://uzmovi.com/search?q=Shrek"), ("Moana", "https://uzmovi.com/search?q=Moana")]
 }
 
 @bot.message_handler(commands=['start'])
 def start(m):
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     kb.add("📰 So'nggi Yangiliklar", "💰 Valyuta", "🌤 Ob-havo", "🎬 Kinolar")
-    bot.send_message(m.chat.id, "Assalomu Alaykum Profil egasi 👋", reply_markup=kb)
+    bot.send_message(m.chat.id, "Assalomu Alaykum! Barcha muammolar tuzatildi. ✅", reply_markup=kb)
 
 @bot.message_handler(func=lambda m: True)
-def main_menu(m):
+def handle_text(m):
     if m.text == "📰 So'nggi Yangiliklar":
         try:
-            r = requests.get("https://kun.uz/news/rss", timeout=10)
+            r = requests.get("https://kun.uz/news/rss")
             soup = BeautifulSoup(r.content, 'xml')
             items = soup.find_all('item')[:10]
             res = ""
@@ -46,12 +58,12 @@ def main_menu(m):
                 res += f"🔴 {i.title.text}\n🔗 [Ochish]({i.link.text})\n\n"
             bot.send_message(m.chat.id, res, parse_mode="Markdown", disable_web_page_preview=True)
         except:
-            bot.send_message(m.chat.id, "⚠️ Yangiliklarni yuklashda muammo.")
+            bot.send_message(m.chat.id, "⚠️ Yangiliklar yuklanmadi.")
 
     elif m.text == "💰 Valyuta":
         try:
             r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
-            res = "💰 **Valyuta kurslari (MB):**\n\n" + "\n".join([f"🔹 1 {i['Ccy']} = {i['Rate']} so'm" for i in r[:10]])
+            res = "💰 **Valyuta kursi (MB):**\n\n" + "\n".join([f"🔹 1 {i['Ccy']} = {i['Rate']} so'm" for i in r[:10]])
             bot.send_message(m.chat.id, res)
         except:
             bot.send_message(m.chat.id, "⚠️ Valyuta sayti band.")
@@ -64,21 +76,27 @@ def main_menu(m):
 
     elif m.text == "🎬 Kinolar":
         kb = types.InlineKeyboardMarkup(row_width=2)
-        janrlar = [("🔥 Jangovar", "k_1"), ("😂 Komediya", "k_2"), ("😱 Qo'rqinchli", "k_3"), ("🚀 Fantastika", "k_4"), ("🎭 Drama", "k_5"), ("👶 Multfilm", "k_6")]
-        kb.add(*[types.InlineKeyboardButton(t, callback_data=d) for t, d in janrlar])
+        j = [("🔥 Jangovar", "k_1"), ("😂 Komediya", "k_2"), ("😱 Qo'rqinchli", "k_3"), ("🚀 Fantastika", "k_4"), ("🎭 Drama", "k_5"), ("👶 Multfilm", "k_6")]
+        kb.add(*[types.InlineKeyboardButton(t, callback_data=d) for t, d in j])
         bot.send_message(m.chat.id, "🎥 Janrni tanlang:", reply_markup=kb)
 
 @bot.callback_query_handler(func=lambda call: True)
-def callbacks(call):
+def callback_query(call):
     if call.data.startswith("w_"):
         bot.send_message(call.message.chat.id, get_weather(call.data[2:]), parse_mode="Markdown")
     elif call.data.startswith("k_"):
-        res = "🎬 **Siz tanlagan janr bo'yicha TOP 10 film:**\n\n"
-        for idx, (name, link) in enumerate(movies[call.data], 1):
-            res += f"{idx}. [{name}]({link})\n"
+        res = "🎬 **Siz tanlagan janr bo'yicha kinolar:**\n\n"
+        for name, link in movies_data[call.data]:
+            res += f"🔹 [{name}]({link})\n"
         bot.send_message(call.message.chat.id, res, parse_mode="Markdown", disable_web_page_preview=True)
     bot.answer_callback_query(call.id)
 
-bot.polling(none_stop=True)
-
+# 4. BOT VA SERVERNI BIR VAQTDA ISHGA TUSHIRISH
+if __name__ == "__main__":
+    # Serverni alohida oqimda (Thread) yurgizamiz
+    server_thread = Thread(target=run_server)
+    server_thread.start()
+    
+    # Bot pollingni boshlaymiz
+    bot.polling(none_stop=True)
 
