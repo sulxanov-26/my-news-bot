@@ -26,33 +26,28 @@ TOKEN = "8468486478:AAGzmOlFP5TWGUB5CzfFN4wbNDHv77zfkUc"
 bot = telebot.TeleBot(TOKEN)
 
 # 1. Kun.uz funksiyasi
+import xml.etree.ElementTree as ET
+
 def get_kun_uz():
-    url = "https://kun.uz/news/list"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
+    # Kun.uz-ning rasmiy RSS manbasi
+    url = "https://kun.uz/news/rss"
+    headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        soup = BeautifulSoup(r.text, 'html.parser')
+        # XML ma'lumotini o'qiymiz
+        root = ET.fromstring(r.content)
         res = []
         
-        # Kun.uz da sarlavhalar odatda 'news-title' klassi bilan keladi
-        # Biz barcha spanlarni ko'rib chiqamiz
-        found_titles = soup.find_all('span', class_='news-title')
-        
-        for span in found_titles[:5]:
-            t_text = span.get_text(strip=True)
-            # Sarlavhaning tepasidagi silkani (a tegini) qidiramiz
-            link_tag = span.find_parent('a')
-            if link_tag:
-                href = link_tag.get('href')
-                if href and not href.startswith('http'):
-                    href = "https://kun.uz" + href
-                res.append(f"🔵 {t_text}\n🔗 {href}")
-        
-        return res if res else ["⚠️ Kun.uz dan yangiliklarni o'qishda muammo bo'ldi. Sayt himoyasini kuchaytirgan."]
+        # RSS ichidagi yangiliklarni qidiramiz
+        for item in root.findall('.//item')[:5]:
+            title = item.find('title').text
+            link = item.find('link').text
+            res.append(f"🔵 {title}\n🔗 {link}")
+            
+        return res if res else ["⚠️ Kun.uz RSS manbasi bo'sh."]
     except Exception as e:
-        return [f"⚠️ Xato: {e}"]
+        return [f"⚠️ RSS xatosi: {e}"]
+
 
 # 2. Daryo.uz funksiyasi
 def get_daryo_uz():
