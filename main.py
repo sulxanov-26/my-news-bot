@@ -2,6 +2,24 @@ import requests
 from bs4 import BeautifulSoup
 import telebot
 from telebot import types
+import os
+from flask import Flask
+from threading import Thread
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is alive!"
+
+def run():
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# Botni ishga tushirishdan oldin serverni yoqish
+keep_alive()
 
 # Sizning Telegram tokeningiz joylangan holatda
 TOKEN = "8468486478:AAES1NzEb0bwTL3zGxD_FpBMDlVqrdx2w2k"
