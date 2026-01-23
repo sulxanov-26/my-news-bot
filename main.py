@@ -5,6 +5,8 @@ from telebot import types
 import os
 from flask import Flask
 from threading import Thread
+import xml.etree.ElementTree as 
+
 app = Flask('')
 
 @app.route('/')
@@ -50,26 +52,29 @@ def get_kun_uz():
 
 
 # 2. Daryo.uz funksiyasi
-import xml.etree.ElementTree as ET
-
 def get_daryo_uz():
     url = "https://daryo.uz/feed/"
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        # XML ma'lumotlarini qayta ishlash
-        root = ET.fromstring(r.content)
-        res = []
+        # XML-dagi xatolarni chetlab o'tish uchun lxml yoki content o'rniga
+        # sarlavhalarni qo'lda (manual) qidiramiz, shunda hech qachon 'invalid token' chiqmaydi
+        import re
+        titles = re.findall(r'<title>(.*?)</title>', r.text)
+        links = re.findall(r'<link>(.*?)</link>', r.text)
         
-        # RSS ichidan sarlavha va linklarni ajratib olish
-        for item in root.findall('.//item')[:5]:
-            title = item.find('title').text
-            link = item.find('link').text
-            res.append(f"🔴 {title}\n🔗 {link}")
-            
+        res = []
+        # Birinchi title odatda saytning nomi bo'ladi, shuning uchun 1-dan boshlaymiz
+        for i in range(1, 6):
+            if i < len(titles) and i < len(links):
+                t = titles[i].replace('<![CDATA[', '').replace(']]>', '')
+                l = links[i]
+                res.append(f"🔴 {t}\n🔗 {l}")
+        
         return res if res else ["⚠️ Daryo.uz dan yangilik topilmadi."]
     except Exception as e:
         return [f"⚠️ Daryo xatosi: {e}"]
+
 
 
 
