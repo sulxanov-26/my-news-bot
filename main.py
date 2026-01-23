@@ -21,6 +21,7 @@ def keep_alive():
 
 keep_alive()
 
+# O'zingizning oxirgi skrinshotingizdagi Token
 TOKEN = "8468486478:AAEQOVdLYDAf42lthIgBibw1Whz-YiR8XYc"
 bot = telebot.TeleBot(TOKEN)
 
@@ -39,12 +40,11 @@ def get_kun_uz():
         return res
     except: return ["⚠️ Kun.uz vaqtincha ishlamayapti."]
 
-# 2. 10 ta Valyuta kursi (Markaziy Bank API)
+# 2. 10 ta Valyuta kursi
 def get_currency_10():
     try:
         r = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
         res = "💰 **Rasmiy valyuta kurslari (10 ta):**\n\n"
-        # Eng ommabop 10 ta valyutani tanlab olamiz
         for i in range(10):
             name = r[i]['CcyNm_UZ']
             rate = r[i]['Rate']
@@ -53,7 +53,7 @@ def get_currency_10():
         return res
     except: return "⚠️ Valyuta kurslarini olib bo'lmadi."
 
-# 3. Kengaytirilgan Sport/Futbol funksiyasi
+# 3. Sport/Futbol yangiliklari
 def get_sport_news():
     sources = [
         {"name": "Championat.asia", "url": "https://championat.asia/uz/news/rss"},
@@ -65,16 +65,14 @@ def get_sport_news():
         try:
             r = requests.get(src['url'], headers=headers, timeout=10)
             root = ET.fromstring(r.content)
-            # Har bir saytdan 3 tadan yangilik olamiz
             for item in root.findall('.//item')[:3]:
                 title = item.find('title').text
                 link = item.find('link').text
                 res.append(f"⚽️ **{src['name']}**:\n{title}\n🔗 {link}")
         except: continue
-    
     return res if res else ["⚠️ Sport yangiliklarini olib bo'lmadi."]
 
-# 4. Ob-havo ma'lumotlari (Statik ro'yxat)
+# 4. Viloyatlar Ob-havosi
 weather_data = {
     "toshkent": "🌤 Toshkent: +12°C", "samarqand": "☁️ Samarqand: +10°C",
     "andijon": "⛅️ Andijon: +13°C", "fargona": "☀️ Farg'ona: +14°C",
@@ -91,9 +89,9 @@ def start(message):
     btn1 = types.InlineKeyboardButton("🔵 Kun.uz", callback_data="kunuz")
     btn2 = types.InlineKeyboardButton("🏆 Sport/Futbol", callback_data="sport")
     btn3 = types.InlineKeyboardButton("💰 10 ta Valyuta", callback_data="currency")
-    btn4 = types.InlineKeyboardButton("🌤 Viloyatlar Ob-havosi", callback_data="weather_menu")
+    btn4 = types.InlineKeyboardButton("🌤 Ob-havo", callback_data="weather_menu")
     markup.add(btn1, btn2, btn3, btn4)
-    bot.send_message(message.chat.id, "Asosiy menyu:", reply_markup=markup)
+    bot.send_message(message.chat.id, "Bot ishga tushdi! Bo'limni tanlang:", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
@@ -113,5 +111,6 @@ def callback_inline(call):
         bot.send_message(call.message.chat.id, weather_data[shahar])
 
 bot.polling(none_stop=True)
+
 
 
