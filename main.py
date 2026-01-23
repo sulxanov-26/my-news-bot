@@ -4,7 +4,7 @@ from telebot import types
 from bs4 import BeautifulSoup
 import os
 
-TOKEN = "8468486478:AAEQOVdLYDAf42lthIgBibw1Whz-YiR8XYc"
+TOKEN = "8468486478:AAGiRCO0RAolKaY2FYSWKyjO2aCh9iu-k9Y"
 bot = telebot.TeleBot(TOKEN)
 
 # OB-HAVO (Faqat hozirgi harorat va holat)
