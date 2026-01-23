@@ -22,7 +22,7 @@ def keep_alive():
 keep_alive()
 
 # Sizning Telegram tokeningiz joylangan holatda
-TOKEN = "8468486478:AAES1NzEb0bwTL3zGxD_FpBMDlVqrdx2w2k"
+TOKEN "8468486478:AAGKfunYf-7R6P5HMuHC3uWIGErEDxvRw3M"
 bot = telebot.TeleBot(TOKEN)
 
 # 1. Kun.uz funksiyasi
@@ -32,29 +32,29 @@ def get_kun_uz():
     try:
         r = requests.get(url, headers=headers)
         soup = BeautifulSoup(r.text, 'html.parser')
-        
-        # Kun.uz-ning yangiliklar bloklarini qidiramiz
-        links = soup.find_all('a', class_='daily-block l-item')
+        # Klass nomini barqarorrog'iga almashtiramiz
+        links = soup.find_all('a', class_='news-l-item')
         
         res = []
-        for link in links[:5]: # Eng oxirgi 5 ta yangilik
-            title = link.find('span', class_='news-title')
-            if title:
-                text = title.get_text(strip=True)
+        for link in links[:5]:
+            title_tag = link.find('span', class_='news-title')
+            if title_tag:
+                text = title_tag.get_text(strip=True)
                 href = "https://kun.uz" + link.get('href')
                 res.append(f"🔵 {text}\n🔗 {href}")
         
-        # Agar yangilik topilmasa, eski klassni tekshirib ko'ramiz
         if not res:
-            links = soup.find_all('a', class_='news__title')
+            # Agar yuqoridagi klass topilmasa, muqobil klassni tekshiramiz
+            links = soup.find_all('a', class_='daily-block')
             for link in links[:5]:
                 text = link.get_text(strip=True)
                 href = "https://kun.uz" + link.get('href')
                 res.append(f"🔵 {text}\n🔗 {href}")
 
-        return res if res else ["⚠️ Hozircha yangilik topilmadi"]
+        return res if res else ["⚠️ Yangilik topilmadi"]
     except Exception as e:
         return [f"⚠️ Xato yuz berdi: {e}"]
+
 
 
 # 2. Daryo.uz funksiyasi
