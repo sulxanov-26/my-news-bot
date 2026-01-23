@@ -57,5 +57,7 @@ def callback_inline(call):
             response += f"{i}. {n}\n\n"
         bot.send_message(call.message.chat.id, response, parse_mode="Markdown")
 
+# MANA SHU QATOR JUDA MUHIM:
 bot.polling(none_stop=True)
+
 
