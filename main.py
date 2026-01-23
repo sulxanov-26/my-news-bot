@@ -21,7 +21,7 @@ def keep_alive():
 
 keep_alive()
 
-TOKEN = "8468486478:AAGzmOlFP5TWGUB5CzffN4wbNDHv77zfKUc"
+TOKEN = "8468486478:AAG2pbNSKCDx1ak9iousB5rlkvxFbHnOdWQ"
 bot = telebot.TeleBot(TOKEN)
 
 # 1. Kun.uz funksiyasi
