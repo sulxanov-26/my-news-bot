@@ -50,15 +50,26 @@ def get_kun_uz():
 
 
 # 2. Daryo.uz funksiyasi
+import xml.etree.ElementTree as ET 
 def get_daryo_uz():
+    # Daryo.uz rasmiy RSS manbasi
+    url = "https://daryo.uz/feed/"
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
-        r = requests.get("https://daryo.uz/cyrillic/", headers=headers)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        titles = soup.find_all(['h2', 'h3'], limit=15)
-        res = [t.get_text(strip=True) for t in titles if len(t.get_text()) > 20]
-        return res[:10]
-    except: return ["⚠️ Daryo.uz dan ma'lumot olib bo'lmadi"]
+        r = requests.get(url, headers=headers, timeout=15)
+        root = ET.fromstring(r.content)
+        res = []
+        
+        # RSS'dagi oxirgi 5 ta yangilikni olamiz
+        for item in root.findall('.//item')[:5]:
+            title = item.find('title').text
+            link = item.find('link').text
+            res.append(f"🔴 {title}\n🔗 {link}")
+            
+        return res if res else ["⚠️ Daryo.uz dan yangilik topilmadi."]
+    except Exception as e:
+        return [f"⚠️ Daryo RSS xatosi: {e}"]
+
 
 # 3. Start va Tugmalar
 @bot.message_handler(commands=['start'])
