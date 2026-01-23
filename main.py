@@ -50,17 +50,18 @@ def get_kun_uz():
 
 
 # 2. Daryo.uz funksiyasi
-import xml.etree.ElementTree as ET 
+import xml.etree.ElementTree as ET
+
 def get_daryo_uz():
-    # Daryo.uz rasmiy RSS manbasi
     url = "https://daryo.uz/feed/"
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         r = requests.get(url, headers=headers, timeout=15)
+        # XML ma'lumotlarini qayta ishlash
         root = ET.fromstring(r.content)
         res = []
         
-        # RSS'dagi oxirgi 5 ta yangilikni olamiz
+        # RSS ichidan sarlavha va linklarni ajratib olish
         for item in root.findall('.//item')[:5]:
             title = item.find('title').text
             link = item.find('link').text
@@ -68,7 +69,8 @@ def get_daryo_uz():
             
         return res if res else ["⚠️ Daryo.uz dan yangilik topilmadi."]
     except Exception as e:
-        return [f"⚠️ Daryo RSS xatosi: {e}"]
+        return [f"⚠️ Daryo xatosi: {e}"]
+
 
 
 # 3. Start va Tugmalar
