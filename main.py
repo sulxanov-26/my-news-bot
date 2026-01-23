@@ -63,16 +63,20 @@ def get_daryo_uz():
         
         res = []
         # Birinchi sarlavha odatda sayt nomi bo'ladi, shuning uchun 1-dan boshlaymiz
-        for i in range(1, 6):
+                for i in range(1, 6):
             if i < len(titles) and i < len(links):
-                # CDATA kabi ortiqcha belgilarni tozalaymiz
+                # CDATA belgilarini tozalash
                 t = titles[i].replace('<![CDATA[', '').replace(']]>', '')
                 l = links[i]
+                # Mana shu qatorning boshi 16 ta bo'sh joy (yoki 4 ta tab) bo'lishi kerak
                 res.append(f"🔴 {t}\n🔗 {l}")
         
         return res if res else ["⚠️ Daryo.uz dan yangilik topilmadi."]
     except Exception as e:
         return [f"⚠️ Daryo xatosi: {e}"]
+
+        
+
 
 
 
